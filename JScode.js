@@ -1,4 +1,4 @@
-/ JavaScript Code with SQL Injection Vulnerability
+// JavaScript Code with SQL Injection Vulnerability
 const express = require('express');
 const app = express();
 const mysql = require('mysql');
