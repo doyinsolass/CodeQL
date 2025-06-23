@@ -3,6 +3,8 @@ name: "CodeQL"
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   schedule:
     - cron: '0 0 * * 0'  # Weekly scan on Sundays at midnight
 
@@ -19,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript', 'python', 'java' ]
+        language: [ 'csharp', 'javascript', 'java' ]
 
     steps:
     - name: Checkout repository
@@ -38,18 +40,27 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
+    - name: Set up .NET (for C# projects)
+      if: matrix.language == 'csharp'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '7.0.x'
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
-
-    # Optional: Replace with manual build if autobuild fails
-    # - name: Build project manually
-    #   run: |
-    #     ./gradlew build  # or npm install, mvn compile, etc.
+    # Replace autobuild with manual build if needed
+    - name: Build project manually
+      run: |
+        if [ "${{ matrix.language }}" = "java" ]; then
+          ./gradlew build || mvn compile || echo "No Java build tool found"
+        elif [ "${{ matrix.language }}" = "javascript" ]; then
+          npm install
+        elif [ "${{ matrix.language }}" = "csharp" ]; then
+          dotnet build
+        fi
 
     - name: Perform CodeQL Analysis
       id: codeql-analyze
