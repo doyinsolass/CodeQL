@@ -51,19 +51,38 @@ jobs:
       with:
         languages: ${{ matrix.language }}
 
-    # Replace autobuild with manual build if needed
     - name: Build project manually
       run: |
-        if [ "${{ matrix.language }}" = "java" ]; then
-          ./gradlew build || mvn compile || echo "No Java build tool found"
-        elif [ "${{ matrix.language }}" = "javascript" ]; then
-          npm install
-        elif [ "${{ matrix.language }}" = "csharp" ]; then
-          dotnet build
-        fi
+        case "${{ matrix.language }}" in
+          java)
+            if [ -f "pom.xml" ]; then
+              mvn compile
+            elif [ -f "build.gradle" ]; then
+              ./gradlew build
+            else
+              echo "No Java build file found"
+            fi
+            ;;
+          javascript)
+            if [ -f "package.json" ]; then
+              npm install
+            else
+              echo "No package.json found"
+            fi
+            ;;
+          csharp)
+            if ls *.sln 1> /dev/null 2>&1; then
+              dotnet build
+            elif ls *.csproj 1> /dev/null 2>&1; then
+              dotnet build
+            else
+              echo "No .sln or .csproj file found for C#"
+              exit 1
+            fi
+            ;;
+        esac
 
     - name: Perform CodeQL Analysis
-      id: codeql-analyze
       uses: github/codeql-action/analyze@v3
       with:
         output: results
