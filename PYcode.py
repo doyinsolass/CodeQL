@@ -1,4 +1,4 @@
-// Python Code with Hardcoded Credentials
+# Python Code with Hardcoded Credentials
 import mysql.connector
 
 def get_user(user_id):
@@ -18,4 +18,4 @@ def get_user(user_id):
 import os
 
 def execute_command(command):
-    os.system(command)
+    os.system(command)  # Insecure: allows command injection
