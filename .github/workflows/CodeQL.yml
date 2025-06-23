@@ -3,8 +3,6 @@ name: "CodeQL"
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   schedule:
     - cron: '0 0 * * 0'  # Weekly scan on Sundays at midnight
 
@@ -27,6 +25,19 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Set up Node.js (for JavaScript projects)
+      if: matrix.language == 'javascript'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Set up Java (for Java projects)
+      if: matrix.language == 'java'
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
@@ -34,6 +45,11 @@ jobs:
 
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3
+
+    # Optional: Replace with manual build if autobuild fails
+    # - name: Build project manually
+    #   run: |
+    #     ./gradlew build  # or npm install, mvn compile, etc.
 
     - name: Perform CodeQL Analysis
       id: codeql-analyze
@@ -45,4 +61,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: codeql-results-${{ matrix.language }}
-        path: results/${{ matrix.language }}.sarif
+        path: results/**/*.sarif
