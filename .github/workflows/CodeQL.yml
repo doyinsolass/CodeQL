@@ -1,12 +1,7 @@
 name: "CodeQL"
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 0 * * 0'  # Weekly scan on Sundays at midnight
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   analyze:
@@ -52,11 +47,33 @@ jobs:
         languages: ${{ matrix.language }}
         queries: security-extended
 
+    - name: Build Java project
+      if: matrix.language == 'java'
+      run: |
+        if [ -f "./gradlew" ]; then
+          ./gradlew build
+        elif [ -f "pom.xml" ]; then
+          mvn compile
+        else
+          echo "No supported Java build file found." && exit 1
+        fi
+
+    - name: Build .NET project
+      if: matrix.language == 'csharp'
+      run: |
+        if ls *.sln 1> /dev/null 2>&1; then
+          dotnet build --configuration Release
+        else
+          echo "No .sln file found for .NET project." && exit 1
+        fi
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
+      with:
+        output: ./codeql-results
 
     - name: Upload SARIF file
       uses: actions/upload-artifact@v4
       with:
         name: codeql-results-${{ matrix.language }}
-        path: results/**/*.sarif
+        path: ./codeql-results/**/*.sarif
